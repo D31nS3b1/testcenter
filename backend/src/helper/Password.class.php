@@ -22,8 +22,8 @@ class Password {
     // to accept the test-account with user123, we take 7 as minimum
     // 60 is maximum to avoid DDOS attacks based on encryption time.
 
-    if ((strlen($password) < 7)) {
-      throw new HttpError("Password must have at least 7 characters.", 400);
+    if ((strlen($password) < 10)) {
+      throw new HttpError("Password must have at least 10 characters.", 400);
     }
 
     if ((strlen($password) > 60)) {
