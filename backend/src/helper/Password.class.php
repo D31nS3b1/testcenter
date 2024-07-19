@@ -32,7 +32,7 @@ class Password {
     }
 
     if ((!preg_match('/^(?=.*[\W])(?=.*[A-Z])(?=.*[a-z])(?=.*[\d])/', $password)) {
-        throw new HttpError("Password should contain a mix of letters (uppercase and lowercase), numbers and symbols.";
+        throw new HttpError("Password should contain a mix of letters (uppercase and lowercase), numbers and symbols.", 400);
     }
   }
 
