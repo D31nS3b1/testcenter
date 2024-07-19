@@ -10,6 +10,6 @@ const upperLowerSymbolNumberRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W)/;
 export class NewUserComponent {
   newUserForm = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(3)]),
-    pw: new FormControl('', [Validators.required, Validators.pattern(upperLowerSymbolNumberRegex)])
+    pw: new FormControl('', [Validators.required, Validators.minLength(10), Validators.pattern(upperLowerSymbolNumberRegex)])
   });
 }
