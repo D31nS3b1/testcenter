@@ -30,6 +30,10 @@ class Password {
       // don't let attackers know the maximum too easy
       throw new HttpError("Password too long", 400);
     }
+
+    if ((!preg_match('/^(?=.*[\W])(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])/', $password)) {
+        throw new HttpError("Password should contain a mix of letters (uppercase and lowercase), numbers and symbols.";
+    }
   }
 
   static function verify(string $password, string $hash, string $saltOrPepper): bool {
