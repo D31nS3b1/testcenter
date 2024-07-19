@@ -31,8 +31,8 @@ class Password {
       throw new HttpError("Password too long", 400);
     }
 
-    if ((!preg_match('/^(?=.*[\W])(?=.*[A-Z])(?=.*[a-z])(?=.*[\d])/', $password)) {
-        throw new HttpError("Password should contain a mix of letters (uppercase and lowercase), numbers and symbols.", 400);
+    if (!preg_match('/^(?=.*[\W])(?=.*[A-Z])(?=.*[a-z])(?=.*[\d])/', $password)) {
+      throw new HttpError("Password should contain a mix of letters (uppercase and lowercase), numbers and symbols.", 400);
     }
   }
 
