@@ -8,6 +8,6 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 export class NewUserComponent {
   newUserForm = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(3)]),
-    pw: new FormControl('', [Validators.required, Validators.minLength(10), Validators.pattern(/^(?=[^A-Z]*[A-Z])(?=[^a-z]*[a-z])(?=\D*\d)$/)])
+    pw: new FormControl('', [Validators.required, Validators.pattern(/^(?=[^A-Z]*[A-Z])(?=[^a-z]*[a-z])(?=\D*\d).{10,60}$/)])
   });
 }
