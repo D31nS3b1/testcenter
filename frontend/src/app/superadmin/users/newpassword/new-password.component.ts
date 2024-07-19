@@ -8,7 +8,7 @@ import { FormGroup, Validators, FormControl } from '@angular/forms';
 
 export class NewPasswordComponent {
   newPasswordForm = new FormGroup({
-    pw: new FormControl('', [Validators.required, Validators.minLength(10), Validators.pattern('(?=.*/[0-9]/)(?=.*/[A-Z]/)(?=.*/[a-z]/)(?=.*/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)')])
+    pw: new FormControl('', [Validators.required, Validators.minLength(10), Validators.pattern(/^(?=[^A-Z]*[A-Z])(?=[^a-z]*[a-z])(?=\D*\d)$/)])
   });
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: string) { }
