@@ -1,0 +1,14 @@
+{{- if .Values.config.backend.fileServerEnabled }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-server # !!! Hard coded in application as internal address !!! @TODO: Should be '{{ .Release.Name }}-file-server-service'
+spec:
+  selector:
+    app: {{ .Release.Name }}-file-server-pod
+  ports:
+    - port: 8080
+      targetPort: http-container
+
+{{- end }}

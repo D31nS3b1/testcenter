@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Testtakers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/iqb-berlin/testcenter/15.3.4/definitions/vo_Testtakers.xsd">
+<Testtakers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/iqb-berlin/testcenter/17.0.0/definitions/vo_Testtakers.xsd">
 
   <Metadata>
     <Description>This file contains some logins for testing and works a sample for developers.</Description>
@@ -18,6 +18,7 @@
         unitColumn="hide"
         groupColumn="hide"
         bookletColumn="hide"
+        bookletStatesColumns=""
         view="small"
         filterLocked="yes"
         filterPending="yes"
@@ -31,9 +32,11 @@
         unitColumn="show"
         groupColumn="show"
         bookletColumn="show"
+        bookletStatesColumns="level bonus"
         view="full"
         filterLocked="no"
         filterPending="no"
+        autoselectNextBlock="no"
       >
       </Profile>
     </GroupMonitor>
@@ -63,6 +66,8 @@
   <Group id="review_group" label="A Group of Reviewers">
     <Login mode="run-review" name="test-review" pw="user123">
       <Booklet>BOOKLET.SAMPLE-1</Booklet>
+      <Booklet state="bonus:yes">BOOKLET.SAMPLE-2</Booklet>
+      <Booklet state="bonus:no">BOOKLET.SAMPLE-2</Booklet>
     </Login>
   </Group>
 

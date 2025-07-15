@@ -38,6 +38,9 @@ import { RetryInterceptor } from './retry.interceptor';
 import { AppErrorHandler } from './app.error-handler';
 import { ErrorInterceptor } from './error.interceptor';
 import { StarterComponent } from './app-root/starter/starter.component';
+import { TestModeInterceptor } from './test-mode.interceptor';
+import { CdkAccordionModule } from '@angular/cdk/accordion';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 @NgModule({
   declarations: [
@@ -73,7 +76,9 @@ import { StarterComponent } from './app-root/starter/starter.component';
     HttpClientModule,
     RouterModule,
     AppRoutingModule,
-    SharedModule
+    SharedModule,
+    CdkAccordionModule,
+    MatExpansionModule
   ],
   providers: [
     BackendService,
@@ -95,6 +100,11 @@ import { StarterComponent } from './app-root/starter/starter.component';
     {
       provide: HTTP_INTERCEPTORS,
       useClass: RetryInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: TestModeInterceptor,
       multi: true
     },
     {

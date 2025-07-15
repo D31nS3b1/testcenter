@@ -186,6 +186,17 @@ try {
         if ($stats['invalid']) {
           CLI::warning("Invalid files found: {$stats['invalid']}");
         }
+        $i = 0;
+        foreach ($stats['reports'] as $file => $report) {
+          if ($i++ > 4) {
+            CLI::warning('.. and ' . ($stats['invalid'] - 5) . ' more.');
+            break;
+          }
+          CLI::warning(' - ' . $file);
+          foreach ($report as $entry) {
+            CLI::warning('   - ' . $entry);
+          }
+        }
 
       } else {
         CLI::p("No changes in files detected.");
@@ -231,7 +242,7 @@ try {
 
   $bsStatus = BroadcastService::getStatus();
   if ($bsStatus == 'online') {
-    CLI::h2("Flashing Broadcasting-Service");
+    CLI::h2("Flashing Broadcaster");
     BroadcastService::send('system/clean');
   }
 

@@ -1,9 +1,10 @@
-<?php /** @noinspection PhpUnhandledExceptionInspection */
+<?php
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
 class SessionDAOExposed extends SessionDAO {
+  /** @return LoginSession[] */
   public function getLoginSessions(array $filters = []): array {
     return parent::getLoginSessions($filters);
   }
@@ -435,9 +436,9 @@ class SessionDAOTest extends TestCase {
       "another_one",
       "blablaa",
       "hot-run-restart",
-      "sample_group",
+      "sample_group_first_of_group",
       "Sample Group",
-      ['' => 'A.BOOKLET'],
+      ['' => ['A.BOOKLET']],
       1,
       946803600
     );
@@ -445,7 +446,7 @@ class SessionDAOTest extends TestCase {
     $expectation = new LoginSession(
       8,
       'static:login:another_one',
-      'group-token',
+      'static:group:sample_group_first_of_group',
       $anotherLogin
     );
 
@@ -458,6 +459,89 @@ class SessionDAOTest extends TestCase {
 
     $this->assertEquals($expectation, $resultAfter2ndLogin);
     $this->assertEquals(8, $this->countTableRows('login_sessions'));
+
+    $anotherLogin = new Login(
+      "yet_another_one",
+      "blablaa",
+      "hot-run-restart",
+      "sample_group",
+      "Sample Group",
+      ['' => ['A.BOOKLET']],
+      1,
+      946803600
+    );
+
+    $expectation = new LoginSession(
+      10, // 9th row, but MySQL give it ID 10
+      'static:login:yet_another_one',
+      'group-token', // as given in testdata.sql
+      $anotherLogin
+    );
+
+    $result = $this->dbc->createLoginSession($anotherLogin);
+    $this->assertEquals($expectation, $result);
+    $this->assertEquals(9, $this->countTableRows('login_sessions'));
+  }
+
+  public function test_createLoginSession_groupIdChanged(): void {
+    $this->dbc->createLoginSession(
+      new Login(
+        "test",
+        "user123",
+        "hot-run-restart",
+        "sample_group",
+        "Sample Group",
+        ['' => ['A.BOOKLET']],
+        1
+      )
+    );
+
+    $this->dbc->_("delete from logins;");
+    $this->dbc->_(
+      '
+      insert into logins (
+        name,
+        password,
+        mode,
+        workspace_id,
+        codes_to_booklets,
+        source, 
+        valid_from,
+        valid_to,
+        valid_for,
+        group_name,
+        group_label
+      ) values (
+        \'test\',
+        \'pw_hash\',
+        \'run-hot-return\',
+        1,
+        \'{"xxx":["BOOKLET.SAMPLE-1"]}\',
+        \'unit test\',
+        null,
+        \'2030-01-02 10:00:00\',
+        null,
+        \'new_id\', -- this can happen as result of a re-upload of a TT.xml with changed group-id
+        \'Sample Group\'
+      );'
+    );
+
+    $this->dbc->createLoginSession(
+      new Login(
+        "test",
+        "user123",
+        "hot-run-restart",
+        "new_id",
+        "Sample Group",
+        ['' => ['A.BOOKLET']],
+        1
+      )
+    );
+
+    $sessions = $this->dbc->getLoginSessions();
+    $this->assertCount(1, $sessions);
+    $this->assertEquals('test', $sessions[0]->getLogin()->getName());
+    $this->assertEquals('new_id', $sessions[0]->getLogin()->getGroupName());
   }
 
   public function test_getLogin_okay(): void {
@@ -535,11 +619,16 @@ class SessionDAOTest extends TestCase {
   }
 
   public function test_getOrCreateGroupToken(): void {
-    $groupToken = $this->dbc->getOrCreateGroupToken($this->testLoginSession->getLogin());
+    $groupToken = $this->dbc->getOrCreateGroupToken(
+      $this->testLoginSession->getLogin()->getWorkspaceId(),
+      $this->testLoginSession->getLogin()->getGroupName(),
+      $this->testLoginSession->getLogin()->getGroupLabel()
+    );
     $expectation = 'group-token';
     $this->assertEquals($expectation, $groupToken);
   }
 
+  // @TODO: code coverage does not work with xdebug 3.4.2 and php 8.3.12
   public function test_getOrCreateGroupToken_parallel(): void {
     $worker = Amp\Parallel\Worker\createWorker();
 
@@ -548,7 +637,6 @@ class SessionDAOTest extends TestCase {
 
     $this->assertEquals($t1->await(), $t2->await());
   }
-
 
   private function countTableRows(string $tableName): int {
     return (int) $this->dbc->_("select count(*) as c from $tableName")["c"];

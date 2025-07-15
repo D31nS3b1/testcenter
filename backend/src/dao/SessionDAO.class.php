@@ -105,7 +105,7 @@ class SessionDAO extends DAO {
               logins.monitors
             from 
               logins
-              left join login_sessions on (logins.name = login_sessions.name)
+              left join login_sessions on (logins.name = login_sessions.name and logins.group_name = login_sessions.group_name)  
               left join login_session_groups on (login_sessions.group_name = login_session_groups.group_name and login_sessions.workspace_id = login_session_groups.workspace_id)
             where 
               logins.name = :name',
@@ -153,13 +153,19 @@ class SessionDAO extends DAO {
 
   public function createLoginSession(Login $login): LoginSession {
     $loginToken = Token::generate('login', $login->getName());
+    $groupToken = $this->getOrCreateGroupToken(
+      $login->getWorkspaceId(),
+      $login->getGroupName(),
+      $login->getGroupLabel()
+    );
 
     // We don't check for existence of the sessions before inserting it because timing issues occurred: If the same
     // login was requested two times at the same moment it could happen that it was created twice.
 
     $this->_(
       'insert ignore into login_sessions (token, name, workspace_id, group_name)
-            values(:token, :name, :ws, :group_name)',
+            values(:token, :name, :ws, :group_name)
+            on duplicate key update group_name = :group_name',
       [
         ':token' => $loginToken,
         ':name' => $login->getName(),
@@ -170,11 +176,10 @@ class SessionDAO extends DAO {
 
     if ($this->lastAffectedRows) {
       $id = (int) $this->pdoDBhandle->lastInsertId();
-      $groupToken = $this->getOrCreateGroupToken($login);
       return new LoginSession($id, $loginToken, $groupToken, $login);
     }
 
-    // there is no way in mySQL to combine insert & select into one query, so have to retrieve it to get the id
+    // there is no way in MySQL to combine insert & select into one query, so have to retrieve it to get the id
     $session = $this->_(
       'select id, token from login_sessions where name = :name and workspace_id = :ws_id',
       [
@@ -183,12 +188,11 @@ class SessionDAO extends DAO {
       ]
     );
 
-    // usually the musst be a session, because it was just inserted. But in some case of some error conditions:
+    // usually there must be a session, because it was just inserted. But in some case of some error conditions:
     if (!$session) {
       throw new Exception("Could not retrieve login-session: `{$login->getName()}`!");
     }
 
-    $groupToken = $this->getOrCreateGroupToken($login);
     return new LoginSession((int) $session['id'], $session['token'], $groupToken, $login);
   }
 
@@ -257,7 +261,7 @@ class SessionDAO extends DAO {
   ): PersonSession {
     $login = $loginSession->getLogin();
 
-    if (count($login->getBooklets()) and !$login->codeExists($code)) {
+    if (count($login->testNames()) and !$login->codeExists($code)) {
       throw new HttpError("`$code` is no valid code for `{$login->getName()}`", 400);
     }
 
@@ -428,14 +432,14 @@ class SessionDAO extends DAO {
     );
   }
 
-  public function getOrCreateGroupToken(Login $login): string {
-    $newGroupToken = Token::generate('group', $login->getGroupName());
+  public function getOrCreateGroupToken(int $workspaceId, string $groupName, string $groupLabel): string {
+    $newGroupToken = Token::generate('group', $groupName);
     $this->_(
       'insert ignore into login_session_groups (group_name, workspace_id, group_label, token) values (?, ?, ?, ?)',
       [
-        $login->getGroupName(),
-        $login->getWorkspaceId(),
-        $login->getGroupLabel(),
+        $groupName,
+        $workspaceId,
+        $groupLabel,
         $newGroupToken
       ]
     );
@@ -447,13 +451,13 @@ class SessionDAO extends DAO {
     $res = $this->_(
       'select token from login_session_groups where group_name = ? and workspace_id = ?',
       [
-        $login->getGroupName(),
-        $login->getWorkspaceId()
+        $groupName,
+        $workspaceId
       ]
     );
 
     if (!isset($res['token'])) {
-      throw new Exception("Could not retrieve group token for `{$login->getGroupName()}`.");
+      throw new Exception("Could not retrieve group token for `{$groupName}`.");
     }
 
     return $res['token'];
@@ -544,35 +548,52 @@ class SessionDAO extends DAO {
   }
 
   public function getTestsOfPerson(PersonSession $personSession): array {
-    $bookletIds = $personSession->getLoginSession()->getLogin()->getBooklets()[$personSession->getPerson()->getCode() ?? ''];
-    if (!count($bookletIds)) {
-      return [];
+    $testNames = $personSession->getLoginSession()->getLogin()->testNames()[$personSession->getPerson()->getCode() ?? ''];
+    if (!count($testNames)) return [];
+
+    $replacementsVirtualTable = [];
+    foreach ($testNames as $testName) {
+      $testName = TestName::fromString($testName);
+      $replacementsVirtualTable[] = $testName->name;
+      $replacementsVirtualTable[] = $testName->bookletFileId;
     }
-    $placeHolder = implode(', ', array_fill(0, count($bookletIds), '?'));
-    $sql = "select
-              tests.person_id,
-              tests.id,
-              tests.locked,
-              tests.running,
-              files.name,
-              files.id as bookletId,
-              files.label as testLabel,
-              files.description
-            from files
-              left outer join tests on files.id = tests.name and tests.person_id = ?
-            where
-              files.workspace_id = ?
-              and files.type = 'Booklet'
-              and files.id in ($placeHolder)
-            order by
-              field(files.id, $placeHolder)";
+
+    $virtualTable = implode(",\n", array_fill(0, count($testNames), 'row (?, ?)'));
+    $orderField = implode(', ', array_fill(0, count($testNames), '?'));
+
+    $sql = "
+      with ba (test_name, booklet_file_id) as (
+        values 
+          $virtualTable
+      )
+      select
+        ba.test_name,
+        tests.person_id,
+        tests.id,
+        tests.locked,
+        tests.running,
+        files.name,
+        files.id as bookletId,
+        files.label as testLabel,
+        files.description
+      from ba
+        left outer join tests
+          on ba.test_name = tests.name
+            and tests.person_id = ?
+        left outer join files
+          on ba.booklet_file_id = files.id
+            and files.workspace_id = ?
+            and files.type = 'Booklet'
+      order by
+        field(ba.test_name, $orderField)
+    ";
     $tests = $this->_(
       $sql,
       [
+        ...$replacementsVirtualTable,
         $personSession->getPerson()->getId(),
         $personSession->getLoginSession()->getLogin()->getWorkspaceId(),
-        ...$bookletIds,
-        ...$bookletIds
+        ...$testNames
       ],
       true
     );
@@ -580,6 +601,7 @@ class SessionDAO extends DAO {
       function(array $res): TestData {
         return new TestData(
           (int) $res['id'],
+          $res['test_name'],
           $res['bookletId'],
           $res['testLabel'],
           $res['description'],
@@ -661,6 +683,7 @@ class SessionDAO extends DAO {
     };
   }
 
+  /** @return LoginSession[] */
   protected function getLoginSessions(array $filters = []): array {
     $logins = [];
 
@@ -672,6 +695,7 @@ class SessionDAO extends DAO {
       $filterSQL[] = "$filter = $filterName";
     }
     $filterSQL = implode(' and ', $filterSQL);
+    $filterSQL = $filterSQL !== '' ? $filterSQL : ' 1 = 1';
 
     $sql = "select
       logins.name,

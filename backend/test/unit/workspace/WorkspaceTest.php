@@ -101,6 +101,8 @@ class WorkspaceTest extends TestCase {
     $this->workspaceDaoMock
       ->expects('getBlockedFiles')
       ->andReturn(['Resource/verona-player-simple-6.0.html' => 'Unit/SAMPLE_UNIT2.XML']);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
 
@@ -127,6 +129,7 @@ class WorkspaceTest extends TestCase {
       '.',
       '..',
       'SAMPLE_UNITCONTENTS.HTM',
+      'coding-scheme.vocs.json',
       'sample_resource_package.itcr.zip',
       'verona-player-simple-6.0.html'
     ];
@@ -144,6 +147,8 @@ class WorkspaceTest extends TestCase {
     $this->workspaceDaoMock
       ->expects('getBlockedFiles')
       ->andReturn(['Resource/verona-player-simple-6.0.html' => 'Unit/SAMPLE_UNIT2.XML']);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
 
@@ -189,6 +194,8 @@ class WorkspaceTest extends TestCase {
     $this->workspaceDaoMock
       ->expects('deleteFile')
       ->twice();
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
 
@@ -221,7 +228,7 @@ class WorkspaceTest extends TestCase {
       "SysCheck" => 1,
       "Booklet" => 4,
       "Unit" => 2,
-      "Resource" => 3
+      "Resource" => 4
     ];
 
     $result = $workspace->countFilesOfAllSubFolders();
@@ -245,6 +252,8 @@ class WorkspaceTest extends TestCase {
       ->expects('getAllFilesWhere')
       ->andReturn([], [])
       ->twice();
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     $result = $workspace->importUncategorizedFiles(['valid.xml', 'P.HTML']);
@@ -263,6 +272,8 @@ class WorkspaceTest extends TestCase {
         [],
         []
       )->twice();
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     $result = $workspace->importUncategorizedFiles(['invalid.xml']);
@@ -295,6 +306,8 @@ class WorkspaceTest extends TestCase {
           ]
         ],
       )->twice();
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     $result = $workspace->importUncategorizedFiles(['valid3.xml']);
@@ -342,6 +355,8 @@ class WorkspaceTest extends TestCase {
           ]
         ],
       )->twice();
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     $result = $workspace->importUncategorizedFiles(['valid.xml']);
@@ -408,6 +423,8 @@ class WorkspaceTest extends TestCase {
         };
       })
       ->times(6);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
 
     $workspace = new Workspace(1);
@@ -472,6 +489,8 @@ class WorkspaceTest extends TestCase {
         };
       })
       ->times(6);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
 
     $workspace = new Workspace(1);
@@ -540,6 +559,8 @@ class WorkspaceTest extends TestCase {
         };
       })
       ->times(6);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     $result = $workspace->importUncategorizedFiles(["archive.zip"]);
@@ -587,6 +608,8 @@ class WorkspaceTest extends TestCase {
         };
       })
       ->times(5);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     $result = $workspace->importUncategorizedFiles(["archive.zip"]);
@@ -629,6 +652,8 @@ class WorkspaceTest extends TestCase {
       ->expects('getAllFilesWhere')
       ->andReturn(null, null, null, null)
       ->times(4);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
 
@@ -674,6 +699,8 @@ class WorkspaceTest extends TestCase {
       ->expects('getAllFilesWhere')
       ->andReturn(null, null, null, null)
       ->twice();
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     ZIP::$mockArchive = [
@@ -738,6 +765,8 @@ class WorkspaceTest extends TestCase {
         };
       })
       ->times(6);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
 
@@ -809,6 +838,8 @@ class WorkspaceTest extends TestCase {
         [] // Booklet,
       )
       ->times(2);
+    $this->workspaceDaoMock
+      ->expects('updateContentTypeBasedOnRemainingTesttakers');
 
     $workspace = new Workspace(1);
     file_put_contents(DATA_DIR . '/ws_1/testtakers.xml', self::dangerousTesttakers);

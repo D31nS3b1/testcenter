@@ -38,7 +38,7 @@
 /frontend/dist
 /frontend/tmp
 /frontend/out-tsc
-/broadcasting-service/dist
+/broadcaster/dist
 /dist
 
 # dev dependencies
@@ -55,12 +55,15 @@
 .env.prod
 
 # cypress
-/e2e/cypress/videos
-/e2e/cypress/screenshots
-/e2e/cypress/downloads
-/e2e/cypress/results
+e2e/cypress
+e2e/cypress-headless
 /e2e/.nyc_output
 /e2e/.coverage
+
+# helm
+scripts/helm/testcenter-*.tgz
+scripts/helm/testcenter-values.yaml
+scripts/helm/traefik-values.yaml
 
 # additional scripts
 /testcenter-scripts

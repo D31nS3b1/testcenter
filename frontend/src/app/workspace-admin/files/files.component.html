@@ -69,7 +69,7 @@
                         <tc-alert [level]="'warning'" [text]="element.type + ' is never used.'"></tc-alert>
                       </div>
                       <ng-container *ngFor="let level of ['error', 'warning', 'info']">
-                        <div *ngFor="let message of element.report[level]">
+                        <div *ngFor="let message of element.report?.[level]">
                           <tc-alert [level]="level" [text]="message"></tc-alert>
                         </div>
                       </ng-container>
@@ -90,7 +90,7 @@
               <mat-header-cell *matHeaderCellDef mat-sort-header> Volle Größe</mat-header-cell>
               <mat-cell *matCellDef="let element" style="white-space: nowrap;">
                 <mat-spinner *ngIf="!enableInteraction; else showSize" [diameter]="25" ></mat-spinner>
-                <ng-template #showSize>{{ element.info.totalSize | bytes }}</ng-template>
+                <ng-template #showSize>{{ ((element.info.totalSize | bytes) !== '-') ? (element.info.totalSize | bytes) : 'nicht berechnet' }}</ng-template>
               </mat-cell>
             </ng-container>
 
@@ -126,7 +126,7 @@
         (click)="hiddenfileinput.click()"
         matTooltip="Dateien hochladen/aktualisieren"
         matTooltipPosition="above"
-        [disabled]="(wds.wsRole !== 'RW') || (!!uploadQueue.files?.length)"
+        [disabled]="(wds.wsRole !== 'RW') || (!!uploadQueue.files.length)"
         data-cy="upload-files"
       >
         <mat-icon>cloud_upload</mat-icon>
@@ -134,7 +134,7 @@
       </button>
     </div>
 
-    <input #hiddenfileinput type="file" name="fileforvo" multiple [iqbFilesUploadInputFor]="fileUploadQueue" [hidden]="true" data-cy="uplaod-file-select" />
+    <input #hiddenfileinput type="file" name="fileforvo" multiple [iqbFilesUploadInputFor]="fileUploadQueue" [hidden]="true" data-cy="upload-file-select" />
 
     <tc-files-upload-queue #fileUploadQueue
       [fileAlias]="fileNameAlias"

@@ -1,4 +1,8 @@
 {
+  "login_subtitle": {
+    "label" : "Titel für Starter-Seite",
+    "defaultvalue" : "Testauswahl"
+  },
   "login_testEndButtonLabel" : {
     "label" : "Schalterbeschriftung für 'Test beenden'",
     "defaultvalue" : "Test beenden"
@@ -10,6 +14,30 @@
   "booklet_warningLeaveTimerBlockTextPrompt" : {
     "label" : "Schalterbeschriftung für 'Zurück zum Test'",
     "defaultvalue" : "Du verlässt einen zeitbeschränkten Bereich und kannst nicht zurückkehren. Trotzdem weiterblättern?"
+  },
+  "booklet_warningLeaveTitle-testlet" : {
+    "label" : "Titel für Warnung (Dialogbox) eines nur einmal betretbaren Bereiches.",
+    "defaultvalue" : "Aufgabenbereich verlassen?"
+  },
+  "booklet_warningLeaveTitle-unit" : {
+    "label" : "Titel für Warnung (Dialogbox) einer nur einmal betretbaren Aufgabe.",
+    "defaultvalue" : "Aufgabe verlassen?"
+  },
+  "booklet_warningLeaveTextPrompt-testlet" : {
+    "label": "Text für Warnung (Dialogbox) eines nur einmal betretbaren Bereiches.",
+    "defaultvalue" : "Du verlässt einen Bereich zu dem du später nicht zurückkehren kannst. Trotzdem weiterblättern?"
+  },
+  "booklet_warningLeaveTextPrompt-unit" : {
+    "label": "Text für Warnung (Dialogbox) eines nur einmal betretbaren Bereiches.",
+    "defaultvalue" : "Du verlässt eine Aufgabe zu der du später nicht zurückkehren kannst. Trotzdem weiterblättern?"
+  },
+  "booklet_blockLockedByAfterLeave" : {
+    "label": "Block kann nicht noch einmal betreten werden",
+    "defaultvalue": "Block kann nicht noch einmal betreten werden"
+  },
+  "booklet_lockedByAfterLeave" : {
+    "label": "Aufgabe kann nicht noch einmal betreten werden",
+    "defaultvalue": "Aufgabe kann nicht noch einmal betreten werden"
   },
   "login_bookletSelectPromptNull" : {
     "label" : "Nachricht für den Fall, dass Booklet(s) beendet wurden und keine weiteren zur Verfügung stehen",
@@ -37,7 +65,7 @@
   },
   "login_unsupportedBrowser" : {
     "label": "Warnung auf de Startseite, wenn nicht unterstützer Browser verwendet wird. Ersetzungen (%s): Browser-Name, Browser-Version.",
-    "defaultvalue" : "Ihr Browser <strong>%s %s</strong> wird von dieser Anwendung leider nicht offiziell unterstützt. Dies kann möglicherweise zu Fehlfunktionen führen! <br> Bitte verwenden Sie eine aktuelle Version von <a href='https://www.getfirefox.org' target='_blank'>Mozilla Firefox</a>, <a href='https://www.google.com/chrome/' target='_blank'>Google Chrome</a>, <a href='https://www.microsoft.com/en-us/edge/download' target='_blank'>Microsoft Edge</a> oder <a href='https://support.apple.com/downloads/safari' target='_blank'>Apple Safari.</a>"
+    "defaultvalue" : "Ihr Browser <strong>%s %s</strong> wird von dieser Anwendung leider nicht offiziell unterstützt. Dies kann möglicherweise zu Fehlfunktionen führen! <br> Bitte verwenden Sie eine aktuelle Version von Mozilla Firefox, Google Chrome, Microsoft Edge oder Apple Safari."
   },
   "booklet_msgNavigationDeniedTitle" : {
     "label" : "Titel der Nachricht, dass nicht weitergeblättert werden kann, solange die Aufgabe nicht vollständig bearbeitet / gesehen worden ist.",
@@ -52,8 +80,8 @@
     "defaultvalue" : "Es müssen erst alle Teilaufgaben bearbeitet werden."
   },
   "booklet_codeToEnterTitle" : {
-    "label" : "Dialogbox für die Eingabe eines Freigabewortes: Titel",
-    "defaultvalue" : "Aufgabenblock ist noch gesperrt"
+    "label" : "Dialogbox für die Eingabe eines Freigabewortes",
+    "defaultvalue" : "Aufgabenblock ist gesperrt, Freigabewort benötigt"
   },
   "booklet_codeToEnterPrompt" : {
     "label" : "Dialogbox für die Eingabe eines Freigabewortes: Aufforderung für die Eingabe eines Freigabewortes",
@@ -167,6 +195,14 @@
     "label" : "Überschrift: Gruppenmonitor",
     "defaultvalue" : "Gruppenüberwachung"
   },
+  "gm_show_monitor" : {
+    "label" : "Titel für Monitorfunktion",
+    "defaultvalue" : "Testgruppen-Überwachung"
+  },
+  "gm_show_test" : {
+    "label" : "Titel für Testüberprüfung",
+    "defaultvalue" : "Testhefte anzeigen"
+  },
   "gm_menu_filter" : {
     "label" : "Meinueintrag: Sitzungen ausblenden",
     "defaultvalue" : "Sitzungen ausblenden"
@@ -175,23 +211,31 @@
     "label" : "Meinueintrag: Spalten",
     "defaultvalue" : "Spalten"
   },
-  "gm_menu_activity" : {
-    "label" : "Meinueintrag: Aktivität",
+  "gm_menu_cols_states" : {
+    "label" : "Spalte: Booklet-Zustände",
+    "defaultvalue" : "Zustände"
+  },
+  "gm_col_personLabel" : {
+    "label" : "Spalte: Teilnehmer",
+    "defaultvalue" : "Teilnehmer"
+  },
+  "gm_col_state" : {
+    "label" : "Spalte: Aktivität",
     "defaultvalue" : "Aktivität"
   },
-  "gm_col_group" : {
+  "gm_col_groupName" : {
     "label" : "Spalte: Gruppe",
     "defaultvalue" : "Gruppe"
   },
-  "gm_col_booklet" : {
+  "gm_col_bookletLabel" : {
     "label" : "Spalte: Testheft",
     "defaultvalue" : "Testheft"
   },
-  "gm_col_testlet" : {
+  "gm_col_blockLabel" : {
     "label" : "Spalte: Block",
     "defaultvalue" : "Block"
   },
-  "gm_col_unit" : {
+  "gm_col_unitLabel" : {
     "label" : "Spalte: Aufgabe",
     "defaultvalue" : "Aufgabe"
   },
@@ -235,9 +279,17 @@
     "label" : "Control: Entsperren",
     "defaultvalue" : "Test Entsperren"
   },
+  "gm_control_goto_unlock_blocks_confirm_text" : {
+    "label" : "Control: Springe zu Block - soll Zeit wiederhergestellt werden?",
+    "defaultvalue" : "Zeit wiederherstellen bei Sprung in zeitgesteuerten Block?"
+  },
+  "gm_control_goto_unlock_blocks_confirm_headline" : {
+    "label" : "Control: Springe zu Block - soll Zeit wiederhergestellt werden? - Überschrift",
+    "defaultvalue" : "Sprung bestätigen"
+  },
   "gm_control_unlock_success_warning" : {
     "label" : "Wird angezeigt, wenn Tests entsperrt wurden",
-    "defaultvalue" : "ACHTUNG! Die betreffenden Browser müssen ggf. neu gestartet werden."
+    "defaultvalue" : "ACHTUNG! Die betreffenden Browser und diese Testleiterkonsole müssen ggf. neu gestartet werden."
   },
   "gm_control_finish_everything" : {
     "label" : "Control: Testung beenden",
@@ -250,14 +302,6 @@
   "gm_scroll_down" : {
     "label" : "Control: Ganz nach unten",
     "defaultvalue" : "Ganz nach unten"
-  },
-  "gm_col_person" : {
-    "label" : "Spalte: Teilnehmer",
-    "defaultvalue" : "Teilnehmer"
-  },
-  "gm_col_activity" : {
-    "label" : "Spalte: Aktivität",
-    "defaultvalue" : "Aktivität"
   },
   "gm_hide_controls_tooltip" : {
     "label" : "Tooltip: Test-Steuerung verbergen",
@@ -283,37 +327,17 @@
     "label": "Benutzerdefinierter Filter: Ziel - TestheftId",
     "defaultvalue": "Booklet-Id"
   },
-  "gm_filter_target_bookletLabel": {
-    "label": "Benutzerdefinierter Filter: Ziel - Testhefttitel",
-    "defaultvalue": "Booklettitel"
-  },
   "gm_filter_target_unitId": {
     "label": "Benutzerdefinierter Filter: Ziel - Aufgaben-Id",
     "defaultvalue": "Aufgaben-Id"
-  },
-  "gm_filter_target_unitLabel": {
-    "label": "Benutzerdefinierter Filter: Ziel - Aufgabentitel",
-    "defaultvalue": "Aufgabentitel"
   },
   "gm_filter_target_blockId": {
     "label": "Benutzerdefinierter Filter: Ziel - Block-Id",
     "defaultvalue": "Block-Id"
   },
-  "gm_filter_target_blockLabel": {
-    "label": "Benutzerdefinierter Filter: Ziel - Blocktitel",
-    "defaultvalue": "Blocktitel"
-  },
-  "gm_filter_target_state": {
-    "label": "Benutzerdefinierter Filter: Ziel - Teststatus",
-    "defaultvalue": "Teststatus"
-  },
   "gm_filter_target_bookletSpecies": {
     "label": "Benutzerdefinierter Filter: Ziel -Testhefttyp",
     "defaultvalue": "Testhefttyp"
-  },
-  "gm_filter_target_personLabel": {
-    "label": "Benutzerdefinierter Filter: Ziel - Teilnehmer",
-    "defaultvalue": "Teilnehmer"
   },
   "gm_filter_target_groupName": {
     "label": "Benutzerdefinierter Filter: Ziel - Gruppe",
@@ -322,6 +346,10 @@
   "gm_filter_target_testState": {
     "label": "Benutzerdefinierter Filter: Ziel - detaillierter Teststatus",
     "defaultvalue": "detaillierter Teststatus"
+  },
+  "gm_filter_target_bookletStates": {
+    "label": "Benutzerdefinierter Filter: Ziel - Testheft-Adaptivität-Zustand",
+    "defaultvalue": "Testheft-Zustand"
   },
   "gm_filter_type_equal": {
     "label": "Benutzerdefinierter Filter: Typ - gleicht",
@@ -339,6 +367,10 @@
     "label": "Benutzerdefinierter Filter: Nicht",
     "defaultvalue": "nicht"
   },
+  "gm_codetoenter_unlock_tooltip" : {
+    "label" : "Tooltip Passwort-geschützter Bereich geöffnet",
+    "defaultvalue" : "Block wurde geöffnet"
+  },
   "gm_timeleft_tooltip" : {
     "label" : "Tooltip zeitgesteuerter Block: verbleibende Zeit. Ersetzungen (%s): Verbleibende Minuten, Minuten gesamt",
     "defaultvalue" : "Verbleibende Zeit: %s von %s Minute(n)"
@@ -351,6 +383,7 @@
     "label" : "Tooltip zeitgesteuerter Block: Noch nicht gestartet. Ersetzung (%s): Minutenzahl, ",
     "defaultvalue" : "Zeitgesteuerter Block: %s Minute(n)"
   },
+
   "gm_booklet_error_missing_id" : {
     "label" : "Fehleranzeige im Gruppen monitor: Kein Testheft zugeordnet",
     "defaultvalue" : "Kein Testheft zugeordnet!"

@@ -1,0 +1,10 @@
+{{- if .Values.config.backend.fileServerEnabled }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-file-server-config
+data:
+  REDIS_CACHE_FILES: {{ .Values.config.fileServer.redisCacheFiles | quote }}
+
+{{- end }}

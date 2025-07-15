@@ -1,6 +1,224 @@
 ---
 layout: default
 ---
+## 17.0.0
+### :warning: Hinweis für Administratoren
+* Beim `testcenter-update` auf die 17.0.0 wird beim Schritt [] das Skript einmalig abgebrochen -> man muss das Update mit `bash <project>/scripts/update_testcenter.sh -s <source> -t <target>` einmal manuell fortgesetzt werden. `<source>` stellt die Version dar, von der man gerade kommt, `<target>` die Zielversion also 17.0.0
+* Das Update der Datenbankstruktur kann bei vielen vorhanden Daten *sehr* lange dauern. Es wird empfohlen, erst
+  sämtliche Studien zu beenden und die Daten zu löschen bevor geupdatet wird.
+
+### Breaking Changes
+* API Endpoints des Backends werden nicht mehr mit <HOSTNAME>/api aufgerufen, sondern mit <HOSTNAME>/api/; <HOSTNAME>/api gibt von nun an ein 404 error zurück
+* `.env.prod` Variablen wurden geändert:
+  * `BROADCAST_SERVICE_ENABLED` -> `BROADCASTER_ENABLED`
+  * `FILE_SERVICE_ENABLED` -> `FILE_SERVER_ENABLED`
+  * `CACHE_SERVICE_RAM` -> `REDIS_MEMORY_MAX`
+  * `CACHE_SERVICE_INCLUDE_FILES` -> `REDIS_CACHE_FILES`
+  * `REDIS_PASSWORD` neu
+* Images vom iqbberlin/... wurden im Namen geändert
+  * iqbberlin/testcenter-file-service -> iqbberlin/file-server
+  * iqbberlin/testcenter-broadcasting-service -> iqbberlin/testcenter-broadcaster
+* Docker compose 
+  * Die Container-Namen und auch die Volume Namen werden nun dynamisch erzeugt, statt statische Namen zu verwenden, "testcenter-backend" wird zu "<project>-backend-<nummer>"
+* Makefile
+  * Umbenamung von make commands
+
+### Bugfix
+* Units konnten unter bestimmten Extrembedingungen doppelt angelegt werden, was zu doppelten Zeilen in den Ergebnisdaten
+  führte.
+* Beim Wegspeichern von Antworten und Unit-States wird der TimeStamp der Erhebung beachtet, nicht die Reihenfolge
+  in der die Daten beim Server ankommen. Dies konnte bei verzögertem Netzwerk u. U. zu geringfügigen Datenverlust
+  führen.
+* Testleitungskonsole: Error beim Sperren/Fortsetzen behoben. 
+
+### Sicherheit
+* Upgrade von MySQL 8.0 auf 8.4
+
+### Verbesserungen
+* Alle Container laufen mit einem nicht-root User - höhere Sicherheit
+* Kubernetes: 
+  * Alle Deployments nehmen Konfigurationen aus der values.yaml, um deren Resource Management zu steuern.
+  * Backend, Frontend und File Server lassen sich nun bedingungslos skalieren über die values.yaml
+  * Pods starten schneller, da die Probes alle enger getaktet wurden, neue healthchecks wurden eingeführt
+  * `values.yaml` ist ausführlicher dokumentiert
+  * Topology spread constraints können in der values.yaml konfiguriert werden
+  * Ressource management ist nun für jeden Service konfigurierbar
+
+## 16.3.0
+### neue Features
+* Booklet-Xml: Neue Möglichkeit für `<TimeMax leave="allowed">` -"allowed" ermöglicht es einen zeitbeschränkten Block ohne Popups oder weitere Hinweise zu verlassen. 
+
+### Verbesserungen
+* Das Backend nutzt opcache und macht das ganze Testcenter damit performanter.
+* Frontend: Die Kommunikation zwischen Player und Host nutzt jetzt unitId (unitAlias) als sessionId. Dadurch werden Statusmeldungen (z.B. beim window:unload) immer eindeutig der richtigen Unit zugeordnet. Dies entspricht der vorgesehenen Nutzung laut Verona-Spezifikation für SessionIdString: "The session id helps to link the correct unit with the data of the message".
+
+### Bugfixes
+* Der Button für den globalen Systemcheck sollte nun ordnungsgemäß nur angezeigt werden, wenn es kein Login mit dem Modus `sys-check-login` gibt. Beim Löschen oder Hinzufügen einer neuen Testtakers.xml sollte dieser Zustand auch direkt ohne Neuladen der App angezeigt werden.
+ 
+## 16.2.0
+### neue Features
+* Neue `<BookletConfig>` in der Booklet.xml:
+  * `show_reload_button` - Man kann sich in der Applikation selbst einen Reload Button anzeigen lassen, der sich wie der normale Reload Button des Browsers verhält. Dies ist im Zusammenspiel mit dem Kiosk Modus nützlich, da hier die gesamte Browsernavigation ausgeschaltet ist, aber manchmal dennoch ein Reload gebraucht wird. Default: OFF
+
+## 16.1.2
+### Bugfixes
+* Doppelte Einträge von Booklets (`tests`) werden im Migrationsskript für 16.1.0 nachträglich bereinigt. Die Abhängigkeiten `test_logs`,`test_reviews`, `units` werden auf dem Eintrag der `tests` Tabelle mit der niedrigsten ID vereinigt.
+* Der Custom Text `gm_show_monitor` wird nun richtig angewandt
+
+## 16.1.1
+### Änderungen
+* Akkordion Element im Testleitungskonsole ist standard expanded.
+
+## 16.1.0
+### Verbesserung
+* Testleitungskonsole: Die Testhefte werden sind nun in einem Akkordion-Element positioniert und können nach einem extra Klick angezeigt werden. Das räumt visuell das Starter-Menü auf und rückt den Fokus auf die eigentliche Funktionalität der Testleitungkonsole zurück.
+* Links zu externen Seiten wurden gelöscht, um das Navigieren auf fremde Seiten zu vermeiden, während man sich in der PWA befindet.
+ 
+### Bugfix
+* Werden in der Testtakers.xml die Werte für `validTo` geändert, dann wird dies nun sowohl auf der Login-Ebene, als auch auf der individuellen Session-Ebene angewandt. Es verhält sich nun wie erwartet.
+* Die Häufigkeit mit der fälschlicherweise die gleichen Tests (Booklets) mehrmals pro Person angezeigt werden, ist minimiert worden.
+* Auf der Starterseite wird nun immer der Text des customtext `login_subtitle` angezeigt. Vorher wurde immer der Subtitle der vorher besuchten Seite angezeigt.
+* Modi mit dem Wert `forceTimeRestrictions=false` (RUN-DEMO, MONITOR-GROUP, MONITOR-STUDY, RUN-REVIEW, RUN-TRIAL, SYS-CHECK-LOGIN), sind nun korrekterweise nicht von Zeitbeschränkten Blöck in ihrer Navigation eingeschränkt.
+
+## Custom Texts
+* neue Felder
+  * `gm_show_monitor` -> Titel für Monitorfunktion
+  * `gm_show_test` -> Titel für Testüberprüfung
+  * `login_subtitle` -> Titel für Starter-Seite
+
+## 16.0.2
+### Bugfixes
+* Testleitungskonsole: Dialog für das Festlegene einer neuen Restzeit für einen zeitgesteuerten Block erlaubt jetzt die manuelle Eingabe, damit die Funktion auf allen Geräten genutzt werden kann. Eine nicht valide Zahl (kleiner als 0, größer als Maximalzeit, keine Zahl) resultiert in keinem Sprung.
+* Content Security Policy (CSP) wurde angepasst, um die Verwendung des Webworkers auf allen Browsern zu ermöglichen.
+* Eingabefeld für Code ist nicht mehr Autocapitalize. Dies sollte die Eingabe von Codes auf mobilen Geräten erleichtern.
+
+## 16.0.1
+### Verbesserungen
+* Testleiterkonsole ist beim ersten Aufruf immer nach der Spalte "Teilnehmer" sortiert.
+* Der ablaufende Timer wird nun mit einem Webworker im Browser umgesetzt. Sollte eine Testperson eine längere Zeit nicht den Fokus auf dem Testcenter-Tab haben, so läuft die Zeit nun unbeirrt weiter.
+* Adminbereich: Die Gruppen im Tab "Ergebniss/Antworten" zeigen die einzigartige ID als Tooltip an, hilfreich wenn es das selbe Label mehrmals gibt
+* Testleiterkonsole: Das Blocklabel zeigt nun die BlockId mit 'Block 1' an, statt nur '1' (wenn kein Label für den Block gesetzt wurde)
+* Die Websocket Verbindung funktioniert nun auch weiterhin, nachdem der Broadcasting-Service neu gestartet wird.
+
+## 16.0.0
+### Kubernetes
+* Die Helm Chart für das Deployment des Testcenters hat die Version 1.0.0 erreicht und stellt damit eine erste stabile Version des Deployments auf Kubernetes dar.
+
+### Deployment-Hinweis
+* Das Testcenter kann auf dem Hostsystem nur noch unter dem in der .env Datei angegebenen `HOSTNAME` und der subdomain www.`HOSTNAME` aufgerufen werden. Dies mach andere Subdomainen frei für das Hosten von zukünftigen Tools wie z.B. Grafana.
+
+### Bugfix
+* (Testleiterkonsole) Bei Öffnen eines zeitgesteuerten Blocks und Neuvergabe einer Zeit werden nun auch mehrstellige Zahlen richtigerweise erfasst.
+* In einem Randfall flossen die Logs einer Unit in die der nächsten ein (rein additiv und nicht Datenzerstörend). Dies ist behoben.
+* In der Testleitungskonsole wird beim Aktivieren des 'Alle-auswählen' Toggles nun auch immer ALLE (inkl. noch nicht angemeldete) Testpersonen ausgewählt, zu sehen an der farblichen Markierung.
+* 'Test beenden' durch die Testleitungskonsole überstimmt die Booklet Einstellung `<TimeMax leave="forbidden">` und führt zum sofortigen Testabbruch.
+
+### Verbesserungen
+* Das Updateverhalten im Docker-Deployment wurde sowohl in den Logs als auch in der Arbeitsweise verbessert, was in Zukunft umfangreichere Migrationsskripte erlauben wird.
+* Die Testleitungskonsole trackt zuverlässiger die aktuelle Unit der einzelnen Testpersonen.
+* Befehle zum Test beenden
+
+## 15.6.0
+### Verbesserungen
+* Unterschiedliche Custom Texts wurden aufeinander abgestimmt, sodass das Ändern eines Labels auch andere Stellen beeinflusst, die das gleiche Label tragen sollten
+* Die e2e Tests laufen nun schneller und sind verständlicher geschrieben 
+
+### Bugfix
+* `ARROWS_ONLY` innerhalb der Booklet Konfigurationen verhält sich nun wie erwartet
+* Zeitgesteuerte Blöcke werden in Demo- und ähnlichen Modi wieder nicht mehr gesperrt, wie es sein soll.
+* Navigation in der Verzweigung funktionierte nicht korrekt in Kombination mit der Freigabewort-Beschränkung, wenn das
+  Freigabewort in einer höheren Schachtelungstiefe als den optionalen Testlets gesetzt wurde.
+* Verzweigung funktioniert mit Codierschemata, auch wenn Variablen umbenannt worden sind. 
+* Text im Feld von `<codeToEnter>` (Booklet.XML) wird bei der Codeeingabe angezeigt, wenn gegeben.
+
+## 15.5.0
+### neue Features
+* Unit.XML: <BaseVariables> -> <Variable> vom `type` 'json' und 'no-value' können beim Upload gelesen werden
+
+### Verbesserungen
+* Wenn die Testleiterkonsole ein SuS über die `Springe zu BLOCK` Funktion in einen zeitgesteuerten Block schiebt, der bereits geschlossen war, so wird dies in den Logs nun mit einem zusätzlichen Hinweis `(closed timeblock reopened)` versehen
+* Beim Springen in einen zeitgesperrten Block muss nun auch die neue Restzeit festgelegt werden, die alle SuS bekommen. Der höchstmögliche Wert richtet sich dabei nach der höchsten eingestellten `timeMax` aller in der Selektion ausgesuchten SuS.
+* Die Testleitungskonsole zeigt nun direkt beim betreten in einen zeitbeschränkten Block dessen aktiven Status an, statt erst nach 15 Sekunden
+* Der Text im `Springe zu` Button in der Testleitungskonsole zeigt nun den Text an, der im Customtext `Spalte: Block (gm_col_blockLabel)` angelegt ist
+* Änderungen an der Navigation in der Testleitungskonsole:
+  * Mehrere Klicks auf denselben Block in der `Vollständig` und `Nur Blöcke` hat nun folgendes Verhalten
+    * 1 Klick - Nur der Block wird ausgesucht
+    * 2 Klicks - Alle Blöcke von derselben Art werden ausgesucht
+    * 3 Klicks - Die bisherige Auswahl wird aufgehoben
+  * Deselektierung aller Blöcke passiert nicht mehr mit einem Klick auf einen beliebigen Punkt in der angezeigten Tabelle
+  * Das Auswählen aller Blöcke bei einem einmaligen Klick sollte nun viel weniger auftreten
+* Die Buttons des Dialogfelds, das erscheint bevor man einen Block zu sperrenden Block verlässt, wurden farblich und textlich verändert, sodass der Default Button nun die Aktion 'Auf der Seite bleiben' darstellt.
+ 
+### Bugfix
+* Sobald ein Arbeitsplatz im Adminbereich mehr als 1000 Dateien beinhaltet, werden die kumulativen Dateigrößen nicht mehr berechnet, um das Einfrieren des Browsers zu verhindern. Ein Hinweis im Frontend weist darauf hin, dass die Berechnung nicht stattgefunden hat.
+
+### Accessibility
+* Die Buttons im Starter-Menü sind nun mit der Tab Taste navigierbar
+
+## 16.0.0-alpha
+### Kubernetes
+* Erste kubernetes-Deployment via Helm möglich. Im Github Release kann das Installationsskript `helm-install-tc.sh` genutzt werden, um die Helm Charts im Kubernetes-Cluster zu installieren.
+  * Vorasussetzungen:
+    * Ein Kubernetes-Cluster
+    * Zugriff via `kubectl` auf den Cluster
+    * Helm 3
+
+## 15.4.0
+### neue Features
+* Adaptive Testen, Bonusaufgaben und Filterführung
+  * Verschiedenste Szenarien von Verzweigungen oder optionalen Aufgaben in Booklets sind nun möglich:
+    Siehe: https://iqb-berlin.github.io/tba-info/Testcenter/Adaptives_Testen/
+  * Varianten verschiedener des desselben Booklets sind nun möglich in dem Ver
+    (z. B. mit und ohne Befragung, mit Anleitung für Tablet oder mit Anleitung für PC)
+    Siehe: https://iqb-berlin.github.io/tba-info/Testcenter/Adaptives_Testen/#konfiguration-in-der-testtaker-xml
+  * Filtern nach Bestimmten Bookletzuständen im Gruppenmonitor ist nun möglich.
+* "Forward only" Modus:
+  * Booklet-Parameter `unit_navibuttons` hat nun die Option `FORWARD_ONLY`, so das nur der Vorwortknopf gezeigt wird.
+  * Neue Restriction `<LockafterLeaving>` erlaubt das automatische (und endgültige sperren) nach Verlassen der Unit,
+    um sicherzustellen, dass in einem Szenario, in dem nur vorwärtsgegangen werden darf, auch nicht über die Address-
+    zeile, die Browsernavigation, das Seitenmenü oder andere Weise zurücknavigiert werden kann.
+
+### Verbesserungen
+* Entlastung des Servers durch deutliche Reduktion von redundanten Calls.
+* Überarbeiteter Testcontroller reduziert fehlerhafte und seltsame Zustände im Fall von sehr langsamen oder
+  sehr schnellen Vorgängen im laufenden Test.
+* Es werden viel mehr Datentypen abseits von `text/html` durch den File-Service komprimiert. Dadurch wird das Laden 
+  vieler Dateitypen nun schneller.  
+* Für eine bessere Lesbarkeit und intuitivere Konfiguration wird die Ordnerstruktur der Installation geändert. Diese
+  wurden bereits in Version 15.3.4 eingeführt und werden nun weiter ausgebaut.
+* Gruppen-Monitor:
+  * Ein bereits gesperrtes Testlet wird nun wieder entsperrt, wenn der Gruppen-Monitor einen Teilnehmer dorthin
+    navigiert. Handelt es sich um einen zeitgesteuertes Testlet, beginnt die Zeit wieder von vorn. In diesem Fall muss 
+    die Bewegung vom Testleiter bestätigt werden.  
+  * Neue custom texts: 'gm_control_goto_unlock_blocks_confirm_headline' und 'gm_control_goto_unlock_blocks_confirm_text'
+  * Kommandos vom Gruppen-Monitor erscheinen nun im Testlog. Dies dient vor allem der Nachvollziehbarkeit der
+    Ereignisse, wenn zum Beispiel ein bereits geschlossener zeitgesteuerter Block wieder geöffnet wurde.
+  * Wird der "Springe zu"-Knopf im Gruppenmonitor verwendet, wird die Auswahl der Testteilnehmer nicht mehr für den 
+    folgenden Block beibehalten. Dieses Verhalten kann durch eine neue Einstellung in der Testtakers.xml im Gruppen-
+    Monitor-Profil ausgewählt werden `autoselectNextBlock="no"`.
+  * Diverse visuelle Verbesserungen
+
+### Bugfix
+* Das Starten eines neuen Booklets wurde nicht automatisch auf GM angezeigt, sondern der Browser musste neu geladen
+  werden.
+* Beim Einloggen über URL eines Gruppen-Monitors mit nur einem Booklet wurde dieses Booklet automatisch gestartet, statt
+  dass der Monitor erreicht wird.
+* Beim Hochladen einer Testtakers-Datei, die Logins oder Gruppen-Ids verwendet, die bereits auf einem anderen Workspace
+  vergeben sind, werden die bereits bestehenden Logins und Workspace korrekt in der Fehlermeldung benannt.
+* Wurde eine Testtaker-Datei erneut hochgeladen, in der eine Gruppen-Id zu einem bestehenden Login verändert wurde, 
+  konnte dieser login sich nicht mehr einloggen. Nun wird die Gruppe-Id bestehender Logins aktualisiert.
+* Seitenzahl im Studienmonitor wird korrekt angezeigt.
+* Beim Wegspeichern von Antworten und Unit-States wird der TimeStamp der Erhebung beachtet, nicht die Reihenfolge
+  in der die Daten beim Server ankommen. Dies konnte bei verzögertem netzwerk u. U. zu geringfügigen Datenverlust
+  führen.
+* Durch extrem schnelle Beenden und Erneutes starten eines Tests war es möglich, Restriktionen zu umgehen.
+* Im Systemcheck XML: Das Attribut `required` wird nun korrekt ausgewertet, wenn es auf `false` gesetzt ist. Vorher 
+  wurde die Existenz des Attributs als `true` interpretiert.
+* Unit-XML Validierung: Wird beim `from` Attribut eine Unit-ID einer nicht einzigartigen Unit angegeben, die mehrfach 
+  genutzt wird, so ist dies richtigerweise ein Fehler. Dieser Fehler wird nun bereits während der Validierung beim 
+  Hochladen angezeigt, und nicht erst beim Abspielen der Unit. Referenzierungen in geschachtelten Bedingungen werden 
+  nun auch besser validiert.
+
 ## 15.3.4
 ### bugfixes
 * Fixes in installer und updater script

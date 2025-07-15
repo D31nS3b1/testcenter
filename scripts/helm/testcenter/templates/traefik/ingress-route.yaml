@@ -1,0 +1,70 @@
+{{- if .Values.ingress.traefikEnabled }}
+
+# Broadcaster
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-broadcaster-ingress
+  namespace: tc
+spec:
+  entryPoints:
+    {{- if .Values.ingress.tlsEnabled }}
+    - websecure
+    {{- else }}
+    - web
+    {{- end }}
+  routes:
+    - kind: Rule
+      match: (Host(`www.{{ .Values.ingress.baseDomain }}`) || Host(`{{ .Values.ingress.baseDomain }}`)) && PathPrefix(`/bs/public`)
+      middlewares:
+        - name: security-headers
+        - name: stripregex-bs
+        {{- if .Values.ingress.tlsEnabled }}
+        - name: https-redirect
+        {{- end }}
+      services:
+        - kind: Service
+          name: broadcaster # !!! hard coded in application as internal address !!!
+          port: 3000
+  {{- if .Values.ingress.tlsEnabled }}
+  tls:
+    certResolver: {{ .Values.ingress.tlsCertResolver }}
+  {{- end }}
+---
+
+# Frontend
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-frontend-ingress
+  namespace: tc
+spec:
+  entryPoints:
+    {{- if .Values.ingress.tlsEnabled }}
+    - websecure
+    {{- else }}
+    - web
+    {{- end }}
+  routes:
+    - kind: Rule
+      match: Host(`www.{{ .Values.ingress.baseDomain }}`) || Host(`{{ .Values.ingress.baseDomain }}`)
+      middlewares:
+        - name: security-headers
+        - name: stripregex-fe
+        {{- if .Values.ingress.tlsEnabled }}
+        - name: https-redirect
+        {{- end }}
+      services:
+        - kind: Service
+          name: {{ .Release.Name }}-frontend-service
+          port: 8080
+  {{- if .Values.ingress.tlsEnabled }}
+  tls:
+    certResolver: {{ .Values.ingress.tlsCertResolver }}
+    domains:
+      - main: {{ .Values.ingress.baseDomain }}
+        sans:
+          - www.{{ .Values.ingress.baseDomain }}
+  {{- end }}
+
+{{- end }}

@@ -37,6 +37,7 @@
                           <xs:simpleContent>
                             <xs:extension base="xs:string">
                               <xs:attribute name="codes" type="xs:string" />
+                              <xs:attribute name="state" type="StateListType" />
                             </xs:extension>
                           </xs:simpleContent>
                         </xs:complexType>
@@ -49,7 +50,7 @@
                   <xs:attribute name="mode">
                     <xs:annotation>
                       <xs:documentation>
-                        See: https://github.com/iqb-berlin/testcenter-frontend/blob/master/docs/test-mode.md
+                        See: https://github.com/iqb-berlin/testcenter/blob/master/docs/pages/test-mode.md
                       </xs:documentation>
                     </xs:annotation>
                     <xs:simpleType>
@@ -216,6 +217,11 @@
     </xs:simpleContent>
   </xs:complexType>
 
+  <xs:simpleType name="StateListType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([a-z\d-]+:[a-z\d-]+,?\W?)+"/>
+    </xs:restriction>
+  </xs:simpleType>
   <xs:complexType name="ProfileReferenceType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
@@ -234,9 +240,11 @@
     <xs:attribute name="unitColumn" type="GroupMonitorProfileColumnSetting" />
     <xs:attribute name="groupColumn" type="GroupMonitorProfileColumnSetting" />
     <xs:attribute name="bookletColumn" type="GroupMonitorProfileColumnSetting" />
+    <xs:attribute name="bookletStatesColumns" type="xs:string" />
     <xs:attribute name="view" type="GroupMonitorProfileViewSetting" />
     <xs:attribute name="filterPending" type="GroupMonitorProfileFilterSetting" />
     <xs:attribute name="filterLocked" type="GroupMonitorProfileFilterSetting" />
+    <xs:attribute name="autoselectNextBlock" type="GroupMonitorProfileFilterSetting" />
   </xs:complexType>
 
   <xs:complexType name="FilterType">
@@ -246,6 +254,7 @@
         <xs:attribute name="field" type="GroupMonitorProfileFilterField" />
         <xs:attribute name="type" type="FilterTypeType" />
         <xs:attribute name="value" type="xs:string" />
+        <xs:attribute name="subValue" type="xs:string" />
         <xs:attribute name="not" type="xs:boolean" />
       </xs:extension>
     </xs:simpleContent>
@@ -274,6 +283,7 @@
       <xs:enumeration value="testState"/>
       <xs:enumeration value="mode"/>
       <xs:enumeration value="bookletSpecies"/>
+      <xs:enumeration value="bookletStates"/>
     </xs:restriction>
   </xs:simpleType>
 

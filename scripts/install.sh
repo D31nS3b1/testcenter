@@ -12,12 +12,13 @@ declare OPTIONAL_PACKAGES=("make -v")
 
 declare -A ENV_VARS
 ENV_VARS[HOSTNAME]=localhost
+ENV_VARS[REDIS_PASSWORD]=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' </dev/urandom | fold -w 16 | head -n 1)
 ENV_VARS[MYSQL_ROOT_PASSWORD]=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' </dev/urandom | fold -w 16 | head -n 1)
-ENV_VARS[MYSQL_SALT]=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' </dev/urandom | fold -w 5 | head -n 1)
 ENV_VARS[MYSQL_USER]=iqb_tba_db_user
 ENV_VARS[MYSQL_PASSWORD]=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' </dev/urandom | fold -w 16 | head -n 1)
+ENV_VARS[PASSWORD_SALT]=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' </dev/urandom | fold -w 5 | head -n 1)
 
-ENV_VAR_ORDER=(HOSTNAME MYSQL_ROOT_PASSWORD MYSQL_SALT MYSQL_USER MYSQL_PASSWORD)
+ENV_VAR_ORDER=(HOSTNAME REDIS_PASSWORD MYSQL_ROOT_PASSWORD MYSQL_USER MYSQL_PASSWORD PASSWORD_SALT)
 
 declare TARGET_TAG
 declare TARGET_DIR
@@ -151,7 +152,7 @@ prepare_installation_dir() {
   mkdir -p "$TARGET_DIR"/config/traefik
   mkdir -p "$TARGET_DIR"/scripts/make
   mkdir -p "$TARGET_DIR"/scripts/migration
-  mkdir -p "$TARGET_DIR"/secrets/traefik/certs/letsencrypt
+  mkdir -p "$TARGET_DIR"/secrets/traefik/certs/acme
 
   cd "$TARGET_DIR"
 }
@@ -170,11 +171,13 @@ download_file() {
 download_files() {
   printf "4. Downloading files:\n"
 
-  download_file docker-compose.yml docker/docker-compose.yml
-  download_file docker-compose.prod.yml dist-src/docker-compose.prod.yml
-  download_file docker-compose.prod.tls.yml dist-src/docker-compose.prod.tls.yml
-  download_file .env.prod-template dist-src/.env.prod-template
-  download_file config/traefik/tls-config.yml config/traefik/tls-config.yml
+  download_file docker-compose.yml docker-compose.yml
+  download_file docker-compose.prod.yml docker-compose.prod.yml
+  download_file docker-compose.prod.tls.yml docker-compose.prod.tls.yml
+  download_file .env.prod-template .env.prod-template
+  download_file config/traefik/tls-acme.yml config/traefik/tls-acme.yml
+  download_file config/traefik/tls-certificates.yml config/traefik/tls-certificates.yml
+  download_file config/traefik/tls-options.yml config/traefik/tls-options.yml
   download_file scripts/make/$APP_NAME.mk scripts/make/prod.mk
   download_file scripts/update_$APP_NAME.sh scripts/update.sh
   chmod +x scripts/update_$APP_NAME.sh
@@ -192,23 +195,45 @@ customize_settings() {
   # Setup environment variables
   printf "5. Set Environment variables (default passwords are generated randomly):\n"
 
-  sed -i.bak "s#VERSION.*#VERSION=$TARGET_TAG#" .env.prod && rm .env.prod.bak
+  # Persist selected release version
+  sed -i.bak "s|^VERSION=.*|VERSION=$TARGET_TAG|" .env.prod && rm .env.prod.bak
 
   declare env_var_name
   for env_var_name in "${ENV_VAR_ORDER[@]}"; do
     declare env_var_value
-    read -p "$env_var_name: " -er -i "${ENV_VARS[$env_var_name]}" env_var_value
-    sed -i.bak "s#$env_var_name.*#$env_var_name=$env_var_value#" .env.prod && rm .env.prod.bak
+    read -p "${env_var_name}: " -er -i "${ENV_VARS[${env_var_name}]}" env_var_value
+    sed -i.bak "s|^${env_var_name}=.*|${env_var_name}=${env_var_value}|" .env.prod && rm .env.prod.bak
   done
 
   read -p 'Use TLS? [Y/n]: ' -r -n 1 -e TLS
-  if [[ ! $TLS =~ ^[yY]$ ]]; then
-    sed -i.bak 's/TLS_ENABLED=on/TLS_ENABLED=off/' .env.prod && rm .env.prod.bak
+  if [[ $TLS =~ ^[nN]$ ]]; then
+    sed -i.bak 's|^TLS_ENABLED=true|TLS_ENABLED=false|' .env.prod && rm .env.prod.bak
+  fi
+
+  read -p "Use an ACME-Provider for TLS, like 'Let's encrypt' or 'Sectigo'? [Y/n]: " -r -n 1 -e TLS
+  if [[ $TLS =~ ^[nN]$ ]]; then
+    sed -i.bak "s|^TLS_CERTIFICATE_RESOLVER=.*|TLS_CERTIFICATE_RESOLVER=|" .env.prod && rm .env.prod.bak
+  else
+    sed -i.bak "s|^TLS_CERTIFICATE_RESOLVER=.*|TLS_CERTIFICATE_RESOLVER=acme|" .env.prod && rm .env.prod.bak
+
+    read -p "TLS_ACME_CA_SERVER: " -er -i "${TLS_ACME_CA_SERVER}" TLS_ACME_CA_SERVER
+    sed -i.bak "s|^TLS_ACME_CA_SERVER=.*|TLS_ACME_CA_SERVER=${TLS_ACME_CA_SERVER}|" .env.prod && rm .env.prod.bak
+
+    read -p "TLS_ACME_EAB_KID: " -er -i "${TLS_ACME_EAB_KID}" TLS_ACME_EAB_KID
+    sed -i.bak "s|^TLS_ACME_EAB_KID=.*|TLS_ACME_EAB_KID=${TLS_ACME_EAB_KID}|" .env.prod && rm .env.prod.bak
+
+    read -p "TLS_ACME_EAB_HMAC_ENCODED: " -er -i "${TLS_ACME_EAB_HMAC_ENCODED}" TLS_ACME_EAB_HMAC_ENCODED
+    sed -i.bak "s|^TLS_ACME_EAB_HMAC_ENCODED=.*|TLS_ACME_EAB_HMAC_ENCODED=${TLS_ACME_EAB_HMAC_ENCODED}|" .env.prod &&
+      rm .env.prod.bak
+
+    read -p "TLS_ACME_EMAIL: " -er -i "${TLS_ACME_EMAIL}" TLS_ACME_EMAIL
+    sed -i.bak "s|^TLS_ACME_EMAIL=.*|TLS_ACME_EMAIL=${TLS_ACME_EMAIL}|" .env.prod && rm .env.prod.bak
   fi
 
   # Setup makefiles
-  #sed -i.bak "s#TC_BASE_DIR :=.*#TC_BASE_DIR := \\$TARGET_DIR#" scripts/make/${APP_NAME}.mk && rm scripts/make/${APP_NAME}.mk.bak
-  sed -i.bak "s#scripts/update.sh#scripts/update_${APP_NAME}.sh#" scripts/make/${APP_NAME}.mk &&
+  sed -i.bak "s|^TC_BASE_DIR :=.*|TC_BASE_DIR := \\$TARGET_DIR|" scripts/make/${APP_NAME}.mk &&
+    rm scripts/make/${APP_NAME}.mk.bak
+  sed -i.bak "s|scripts/update.sh|scripts/update_${APP_NAME}.sh|" scripts/make/${APP_NAME}.mk &&
     rm scripts/make/${APP_NAME}.mk.bak
   printf "include %s/scripts/make/$APP_NAME.mk\n" "$TARGET_DIR" >"$TARGET_DIR"/Makefile
 
@@ -223,7 +248,7 @@ application_start() {
     read -p "Do you want to start $APP_NAME now? [Y/n] " -er -n 1 is_start_now
     printf '\n'
     if [[ ! $is_start_now =~ [nN] ]]; then
-      make run-detached
+      make testcenter-up
     else
       printf "'%s' installation script finished.\n" $APP_NAME
       exit 0

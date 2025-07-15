@@ -1,0 +1,45 @@
+services:
+  file-server:
+    environment:
+      REDIS_CACHE_FILES: false
+
+  task-runner:
+    container_name: testcenter-task-runner
+    profiles:
+      - task-runner
+    build:
+      dockerfile: task-runner/Dockerfile
+    volumes:
+      - ./README.md:/usr/src/testcenter/task-runner/README.md
+      - ./broadcaster:/usr/src/testcenter/task-runner/broadcaster
+      - ./common:/usr/src/testcenter/task-runner/common
+      - ./definitions:/usr/src/testcenter/task-runner/definitions
+      - ./dist:/usr/src/testcenter/task-runner/dist
+      - ./docs:/usr/src/testcenter/task-runner/docs
+      - ./frontend:/usr/src/testcenter/task-runner/frontend
+      - ./package.json:/usr/src/testcenter/task-runner/package.json
+      - ./package-lock.json:/usr/src/testcenter/task-runner/package-lock.json
+      - ./sampledata:/usr/src/testcenter/task-runner/sampledata
+      - ./scripts:/usr/src/testcenter/task-runner/scripts
+      - ./test/api:/usr/src/testcenter/task-runner/test/api
+      - ./test/config.docker.json:/usr/src/testcenter/task-runner/test/config.json
+    networks:
+      - testcenter
+
+  task-runner-file-server:
+    extends:
+      service: task-runner
+    depends_on:
+      file-server:
+        condition: service_started
+      cache-server:
+        condition: service_started
+
+  task-runner-backend:
+    extends:
+      service: task-runner
+    depends_on:
+      backend:
+        condition: service_healthy
+      cache-server:
+        condition: service_started

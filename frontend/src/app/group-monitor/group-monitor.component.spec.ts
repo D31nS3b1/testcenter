@@ -22,7 +22,7 @@ import { AlertComponent, CustomtextPipe, MainDataService } from '../shared/share
 import { GroupMonitorComponent } from './group-monitor.component';
 import {
   CheckingOptions, CommandResponse,
-  TestSession, TestSessionData, TestSessionSetStats
+  TestSession, TestSessionData, TestSessionSetStat
 } from './group-monitor.interfaces';
 import { BackendService } from './backend.service';
 import { TestSessionComponent } from './test-session/test-session.component';
@@ -33,6 +33,9 @@ import {
   unitTestExampleSessions,
   unitTestCommandResponse
 } from './unit-test-example-data.spec';
+import { TemplateContextDirective } from '../shared/directives/template-context.directive';
+import { TimeLeftPipe } from './test-session/timeleft.pipe';
+import { PositionPipe } from './test-session/position.pipe';
 
 class MockMatDialog {
   open(): { afterClosed: () => Observable<{ action: boolean }> } {
@@ -56,8 +59,8 @@ class MockTestSessionManagerService {
     autoCheckAll: true
   };
 
-  sessionsStats$ = new BehaviorSubject<TestSessionSetStats>(unitTestSessionsStats);
-  checkedStats$ = new BehaviorSubject<TestSessionSetStats>(unitTestCheckedStats);
+  sessionsStats$ = new BehaviorSubject<TestSessionSetStat>(unitTestSessionsStats);
+  checkedStats$ = new BehaviorSubject<TestSessionSetStat>(unitTestCheckedStats);
   sessions$ = new BehaviorSubject<TestSession[]>(unitTestExampleSessions);
   commandResponses$ = new BehaviorSubject<CommandResponse>(unitTestCommandResponse);
   sessions = unitTestExampleSessions;
@@ -91,7 +94,10 @@ describe('GroupMonitorComponent', () => {
         GroupMonitorComponent,
         TestSessionComponent,
         CustomtextPipe,
-        AlertComponent
+        AlertComponent,
+        TemplateContextDirective,
+        TimeLeftPipe,
+        PositionPipe
       ],
       imports: [
         MatIconModule,

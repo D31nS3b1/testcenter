@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import {
   BehaviorSubject, Observable, ReplaySubject, Subject
 } from 'rxjs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { distinct } from 'rxjs/internal/operators/distinct';
 import { shareReplay } from 'rxjs/internal/operators/shareReplay';
 import { filter } from 'rxjs/operators';
@@ -71,6 +71,8 @@ export class MainDataService {
 
   isExtendedKbUsed: boolean | null = null;
 
+  isTestingMode: boolean = false;
+
   getAuthData(): AuthData | null {
     if (this._authData$.getValue()) {
       return this._authData$.getValue();
@@ -101,7 +103,9 @@ export class MainDataService {
   constructor(
     private cts: CustomtextService,
     private bs: BackendService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    @Inject('IS_PRODUCTION_MODE') public isProductionMode: boolean
   ) {
     this.appConfig$.subscribe(appConfig => {
       this.appTitle$.next(appConfig.appTitle);
@@ -112,6 +116,7 @@ export class MainDataService {
         this.cts.addCustomTexts(authData.customTexts);
       }
     });
+    this.getTestMode();
   }
 
   setAuthData(authData: AuthData): void {
@@ -136,7 +141,7 @@ export class MainDataService {
   quit(): void {
     this._authData$.next(null);
     localStorage.removeItem(localStorageAuthDataKey);
-    this.router.navigate(['/']);
+    window.location.href = '/';
   }
 
   resetAuthData(): void {
@@ -152,7 +157,7 @@ export class MainDataService {
       this._authData$.next(null);
       localStorage.removeItem(localStorageAuthDataKey);
     }
-    this.bs.clearCache();
+    this.bs.clearCache(); // todo this function is not called - (.subscribe() is missing).
     setTimeout(() => { window.location.href = '/'; }, 100);
   }
 
@@ -165,5 +170,13 @@ export class MainDataService {
 
   clearErrorBuffer(): void {
     this._appError$.next();
+  }
+
+  // integrations tests use this.
+  getTestMode(): void {
+    this.route.queryParams
+      .subscribe(params => {
+        this.isTestingMode = this.isTestingMode || !!(!this.isProductionMode && params.testMode);
+      });
   }
 }

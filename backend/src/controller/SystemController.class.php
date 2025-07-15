@@ -82,6 +82,8 @@ class SystemController extends Controller {
         'baseUrl' => Server::getUrl(),
         'veronaPlayerApiVersionMin' => SystemConfig::$system_veronaMin,
         'veronaPlayerApiVersionMax' => SystemConfig::$system_veronaMax,
+        'iqbStandardResponseTypeMin' => SystemConfig::$system_iqbStandardResponseMin,
+        'iqbStandardResponseTypeMax' => SystemConfig::$system_iqbStandardResponseMax,
         'fileServiceUri' => FileService::getUri(),
         'broadcastingServiceUri' => BroadcastService::getUri()
       ]
@@ -169,7 +171,11 @@ class SystemController extends Controller {
   }
 
   public static function postClearCache(Request $request, Response $response): Response {
+    $directives = JSON::decode($request->getBody()->getContents())->directives;
     return $response
-      ->withHeader('Clear-Site-Data', '"*"');
+      ->withHeader('Clear-Site-Data',
+        !empty($directives) ?
+          implode(',', $directives) :
+          '"*"');
   }
 }

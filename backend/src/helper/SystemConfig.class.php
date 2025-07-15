@@ -7,19 +7,20 @@ class SystemConfig {
   public static string $database_password;
   public static int $database_port;
   public static string $database_user;
-  public static string $fileService_external = "";
-  public static string $fileService_internal = "";
+  public static string $fileService_host = "";
   public static string $broadcastingService_external = "";
   public static string $broadcastingService_internal = "";
   public static string $cacheService_host = "";
+  public static int $cacheService_port;
+  public static string $cacheService_password = "";
   public static string $cacheService_includeFiles = "";
-  public static int $cacheService_ram = 0;
   public static string $password_salt = "t";
   public static bool $system_tlsEnabled = true;
-  public static string $system_hostname;
   public static string $system_version;
   public static int $system_veronaMax;
   public static int $system_veronaMin;
+  public static int $system_iqbStandardResponseMax;
+  public static int $system_iqbStandardResponseMin;
   public static string $system_timezone = 'Europe/Berlin';
   public static bool $debug_useInsecurePasswords = false;
   public static bool $debug_allowExternalXmlSchema = true;
@@ -27,7 +28,7 @@ class SystemConfig {
   public static bool $debug_fastLoginReuse = false;
   public static string $debug_useStaticTime = 'now';
   public static string $language_dateFormat = 'd/m/Y H:i';
-  // TODO server URL, port
+  // TODO server URL
 
   public static function read(): void {
     $config = parse_ini_file(ROOT_DIR . '/backend/config/config.ini', true, INI_SCANNER_TYPED);
@@ -77,24 +78,24 @@ class SystemConfig {
     $config['password']['salt'] = self::stringEnv('PASSWORD_SALT');
 
     $config['system']['tlsEnabled'] = self::boolEnv('TLS_ENABLED');
-    $config['system']['hostname'] = preg_replace('#^[Ww][Ww][Ww]\.#', '', self::stringEnv('HOSTNAME'));
 
-    if (self::boolEnv('BROADCAST_SERVICE_ENABLED')) {
-      $port = $config['system']['tlsEnabled']
-        ? (self::stringEnv('TLS_PORT', '443'))
-        : (self::stringEnv('PORT', '80'));
-      $config['broadcastingService']['external'] = self::stringEnv('HOSTNAME') . ":$port/bs/public/";
-      $config['broadcastingService']['internal']= 'testcenter-broadcasting-service:3000';
+    $portOfReverseProxy = $config['system']['tlsEnabled']
+      ? (self::stringEnv('TLS_PORT_OF_REVERSE_PROXY', '443'))
+      : (self::stringEnv('PORT_OF_REVERSE_PROXY', '80'));
+
+    if (self::boolEnv('BROADCASTER_ENABLED')) {
+      $config['broadcastingService']['external'] = self::stringEnv('HOSTNAME') . ":$portOfReverseProxy/bs/public/";
+      $config['broadcastingService']['internal'] = 'broadcaster:3000';
     }
 
-    if (self::boolEnv('FILE_SERVICE_ENABLED')) {
-      $config['fileService']['external'] = self::stringEnv('HOSTNAME') . ":$port/fs/";
-      $config['fileService']['internal'] = 'testcenter-file-service';
-      $config['cacheService']['host'] = 'testcenter-cache-service';
+    if (self::boolEnv('FILE_SERVER_ENABLED')) {
+      $config['fileService']['host'] = 'file-server:8080/';
     }
 
-    $config['cacheService']['includeFiles'] = self::boolEnv('CACHE_SERVICE_INCLUDE_FILES');
-    $config['cacheService']['ram'] = (int) self::stringEnv('CACHE_SERVICE_RAM');
+    $config['cacheService']['host'] = self::stringEnv('REDIS_HOST');
+    $config['cacheService']['port'] = self::stringEnv('REDIS_PORT');
+    $config['cacheService']['password'] = self::stringEnv('REDIS_PASSWORD');
+    $config['cacheService']['includeFiles'] = self::boolEnv('REDIS_CACHE_FILES');
 
     $overrideConfig = getenv('OVERRIDE_CONFIG');
     if ($overrideConfig) {
@@ -111,7 +112,10 @@ class SystemConfig {
     $v = "verona-player-api-versions";
     self::$system_veronaMax = $packageJson->iqb->$v->max;
     self::$system_veronaMin = $packageJson->iqb->$v->min;
-    self::$system_version =  $packageJson->version;
+    $v = "iqb-standard-response-type";
+    self::$system_iqbStandardResponseMax = $packageJson->iqb->$v->max;
+    self::$system_iqbStandardResponseMin = $packageJson->iqb->$v->min;
+    self::$system_version = $packageJson->version;
   }
 
   private static function boolEnv(string $name): bool {

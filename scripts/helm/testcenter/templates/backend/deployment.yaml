@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+spec:
+  replicas: {{ .Values.deployment.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-backend-pod
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/backend/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/backend/secret.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Release.Name }}-backend-pod
+    spec:
+      {{- if .Values.deployment.backend.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- .Values.deployment.backend.topologySpreadConstraints | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}-backend-container
+          image: "{{ .Values.image.backend.registryPath }}iqbberlin/testcenter-backend:{{ .Values.image.backend.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.backend.imagePullPolicy }}
+          command: [ "apache2-foreground" ]
+          ports:
+            - name: http-container
+              containerPort: 8080
+          {{- if .Values.deployment.backend.resources }}
+          resources:
+            {{- .Values.deployment.backend.resources | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: backend-volume
+              mountPath: /var/www/testcenter/data
+            - name: backend-config-volume
+              mountPath: /var/www/testcenter/backend/config
+          livenessProbe:
+            httpGet:
+              path: /version
+              port: 8080
+            periodSeconds: {{ .Values.deployment.backend.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.deployment.backend.probes.liveness.timeoutSeconds }}
+            successThreshold: {{ .Values.deployment.backend.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.deployment.backend.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /system/status
+              port: 8080
+            periodSeconds: {{ .Values.deployment.backend.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.deployment.backend.probes.readiness.timeoutSeconds }}
+            successThreshold: {{ .Values.deployment.backend.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.deployment.backend.probes.readiness.failureThreshold }}
+          startupProbe:
+            httpGet:
+              path: /version
+              port: 8080
+            periodSeconds: {{ .Values.deployment.backend.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.deployment.backend.probes.startup.timeoutSeconds }}
+            successThreshold: {{ .Values.deployment.backend.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.deployment.backend.probes.startup.failureThreshold }}
+      initContainers:
+        - name: wait-for-db-initcontainer
+          image: "{{ .Values.image.busybox.registryPath }}busybox:{{ .Values.image.busybox.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.busybox.imagePullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+          command: [ 'sh', '-c', 'until nc -z {{ .Release.Name }}-db 3306; do echo waiting for {{ .Release.Name }}-db; sleep 2; done;' ]
+      volumes:
+        - name: backend-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-backend-pvc
+        - name: backend-config-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-backend-config-pvc

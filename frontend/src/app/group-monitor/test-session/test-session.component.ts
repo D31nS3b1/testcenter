@@ -3,19 +3,24 @@ import {
 } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import {
-  Testlet, Unit, TestViewDisplayOptions,
-  isUnit, Selected, TestSession, TestSessionSuperState
+  Testlet, TestViewDisplayOptions, Selected, TestSession, TestSessionSuperState, isBooklet, isTestlet
 } from '../group-monitor.interfaces';
 import { TestSessionUtil } from './test-session.util';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { superStates } from './super-states';
+import { UnitDef } from '../../shared/interfaces/booklet.interfaces';
 
 interface IconData {
   icon: string,
   tooltip: string,
   class?: string,
   description?: string
+}
+
+interface TestletContext {
+  $implicit: Testlet,
+  recursionLevel: number
 }
 
 @Component({
@@ -29,6 +34,7 @@ export class TestSessionComponent {
   @Input() marked: Selected | null = null;
   @Input() selected: Selected | null = null;
   @Input() checked: boolean = false;
+  @Input() bookletStates: { [p: string]: string } = {};
 
   @Output() markedElement$ = new EventEmitter<Selected>();
   @Output() selectedElement$ = new EventEmitter<Selected>();
@@ -36,15 +42,15 @@ export class TestSessionComponent {
 
   superStateIcons: { [key in TestSessionSuperState]: IconData } = superStates;
 
+  // TODO use pipes for the following functions
   stateString = TestSessionUtil.stateString;
-
   hasState = TestSessionUtil.hasState;
-
+  isBooklet = isBooklet;
+  isTestlet = isTestlet;
   // eslint-disable-next-line class-methods-use-this
-  getTestletType = (testletOrUnit: Unit | Testlet): 'testlet' | 'unit' => (isUnit(testletOrUnit) ? 'unit' : 'testlet');
+  trackUnits = (index: number, testlet: Testlet | UnitDef): string => testlet.id || index.toString();
 
-  // eslint-disable-next-line class-methods-use-this
-  trackUnits = (index: number, testlet: Testlet | Unit): string => testlet.id || index.toString();
+  testletContext?: TestletContext;
 
   mark(testletOrNull: Testlet | null = null): void {
     if ((testletOrNull != null) && !testletOrNull.blockId) {
@@ -53,19 +59,27 @@ export class TestSessionComponent {
     if (['pending', 'locked'].includes(this.testSession.state)) {
       return;
     }
-    this.marked = this.asSelectionObject(testletOrNull);
+    this.marked = this.returnAsSelected(testletOrNull);
     this.markedElement$.emit(this.marked);
   }
 
-  isSelected(testletOrNull: Testlet | null = null): boolean {
-    return !!testletOrNull &&
-      (this.selected?.element?.blockId === testletOrNull?.blockId) &&
-      (this.selected?.originSession.booklet.species === this.testSession.booklet.species);
+  isSelectionTheSameBlockAsParentSelection(testletOrNull: Testlet | null = null): boolean {
+    return !!testletOrNull && //  is something Nowselected?
+      (this.selected?.element?.blockId === testletOrNull?.blockId) && // is nowselected already in parentselection?
+      (this.selected?.originSession.booklet.species === this.testSession.booklet.species); // is nowselected same species as parentselection (is it the same block 1? == same col)
   }
 
-  isSelectedHere(testletOrNull: Testlet | null = null): boolean {
-    return this.isSelected(testletOrNull) &&
-      (this.selected?.originSession.data.testId === this.testSession.data.testId);
+  returnClicks(testletOrNull: Testlet | null = null): 'first' | 'second' | 'third' {
+    const isSelectionInSameSession = this.isSelectionTheSameBlockAsParentSelection(testletOrNull) &&
+      (this.selected?.originSession.data.testId === this.testSession.data.testId); // is the nowSelection the same Session (row in Table)
+
+    if (isSelectionInSameSession && this.selected?.nthClick === 'first') {
+      return 'second';
+    }
+    if (isSelectionInSameSession && this.selected?.nthClick === 'second') {
+      return 'third';
+    }
+    return 'first';
   }
 
   isMarked(testletOrNull: Testlet | null = null): boolean {
@@ -79,7 +93,6 @@ export class TestSessionComponent {
     if ((testletOrNull != null) && !testletOrNull.blockId) {
       return;
     }
-    $event.stopPropagation();
     this.applySelection(testletOrNull);
   }
 
@@ -102,7 +115,7 @@ export class TestSessionComponent {
     return false;
   }
 
-  check($event: MatCheckboxChange): void {
+  toggleCheckbox($event: MatCheckboxChange): void {
     this.checked$.emit($event.checked);
   }
 
@@ -110,15 +123,15 @@ export class TestSessionComponent {
     if (['pending', 'locked'].includes(this.testSession.state)) {
       return;
     }
-    this.selected = this.asSelectionObject(testletOrNull, inversion);
+    this.selected = this.returnAsSelected(testletOrNull, inversion);
     this.selectedElement$.emit(this.selected);
   }
 
-  private asSelectionObject(testletOrNull: Testlet | null = null, inversion = false): Selected {
+  private returnAsSelected(testletOrNull: Testlet | null = null, inversion = false): Selected {
     return {
       element: testletOrNull,
       originSession: this.testSession,
-      spreading: this.isSelectedHere(testletOrNull) ? !(this.selected?.spreading) : !testletOrNull,
+      nthClick: this.returnClicks(testletOrNull),
       inversion
     };
   }

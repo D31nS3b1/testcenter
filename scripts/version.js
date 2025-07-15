@@ -84,14 +84,14 @@ const updateVersionInFiles = gulp.parallel(
     '$1/$VERSION'
   ),
   replaceInFiles(
+    `${rootPath}/sampledata/system-test/*.xml`,
+    /(xsi:noNamespaceSchemaLocation="https:\/\/raw\.githubusercontent\.com\/iqb-berlin\/testcenter)\/\d+.\d+.\d+(-[\w.]+)?/g,
+    '$1/$VERSION'
+  ),
+  replaceInFiles(
     `${rootPath}/docs/CHANGELOG.md`,
     /## \[next]/g,
     '## $VERSION'
-  ),
-  replaceInFiles(
-    `${rootPath}/dist-src/.env.prod-template`,
-    /VERSION=\d+.\d+.\d+(-\S+)?/g,
-    'VERSION=$VERSION'
   )
 );
 

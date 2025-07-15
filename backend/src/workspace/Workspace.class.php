@@ -132,6 +132,8 @@ class Workspace {
       $deletionReport->$fieldName[] = $localFilePath;
     }
 
+    $this->workspaceDAO->updateContentTypeBasedOnRemainingTesttakers();
+
     return $deletionReport;
   }
 
@@ -241,6 +243,8 @@ class Workspace {
         }
       }
     }
+
+    $this->workspaceDAO->updateContentTypeBasedOnRemainingTesttakers();
 
     return $filesAfterSorting;
   }
@@ -415,11 +419,14 @@ class Workspace {
 
     $workspaceCache->validate();
 
+    $reports = [];
+
     foreach ($workspaceCache->getFiles(true) as $file) {
       /* @var File $file */
 
       if (!$file->isValid()) {
         $invalidCount++;
+        $reports[$file->getType() . '/' . $file->getId()] = $file->getValidationReport()['error'];
       }
 
       $this->workspaceDAO->storeFile($file);
@@ -433,10 +440,13 @@ class Workspace {
       $loginStats['added'] += $stats['logins_added'];
     }
 
+    $this->workspaceDAO->updateContentTypeBasedOnRemainingTesttakers();
+
     return [
       'valid' => $typeStats,
       'invalid' => $invalidCount,
-      'logins' => $loginStats
+      'logins' => $loginStats,
+      'reports' => $reports
     ];
   }
 

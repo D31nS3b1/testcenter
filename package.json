@@ -1,14 +1,18 @@
 {
   "name": "iqb-testcenter",
-  "version": "15.3.4",
+  "version": "17.0.0",
   "iqb": {
     "release-channels": {
-      "lts": "15.1",
-      "stable": "15.3"
+      "lts": "15.6",
+      "stable": "17.0"
     },
     "verona-player-api-versions": {
       "min": 2,
       "max": 6
+    },
+    "iqb-standard-response-type": {
+      "min": 1,
+      "max": 1
     }
   },
   "license": "MIT",
@@ -18,12 +22,12 @@
   },
   "private": true,
   "scripts": {
-    "lint": "npx eslint frontend/src/**/*.ts frontend/src/**/*.js broadcasting-service/src/**/*.ts scripts/**/*.js",
+    "lint": "npx eslint frontend/src/**/*.ts frontend/src/**/*.js broadcaster/src/**/*.ts scripts/**/*.js",
     "backend:update-specs": "npx gulp --gulpfile=./scripts/update-specs.js updateSpecs",
     "backend:api-test": "node_modules/.bin/gulp --gulpfile=./test/api/test.js runDreddTest",
-    "file-service:api-test": "node_modules/.bin/gulp --gulpfile=./test/api/test.js runDreddTestFs",
+    "file-server:api-test": "node_modules/.bin/gulp --gulpfile=./test/api/test.js runDreddTestFs",
     "frontend:update-compodoc": "npx compodoc -p frontend/tsconfig.compodoc.json -d ./docs/dist/compodoc-frontend",
-    "broadcasting-service:update-compodoc": "npx compodoc -p broadcasting-service/tsconfig.compodoc.json -d ./docs/dist/compodoc-broadcasting-service",
+    "broadcaster:update-compodoc": "npx compodoc -p broadcaster/tsconfig.compodoc.json -d ./docs/dist/compodoc-broadcaster",
     "create-docs": "npx gulp --gulpfile=./scripts/create-docs.js createDocs",
     "create-interfaces": "npx gulp --gulpfile=./scripts/create-interfaces.js createInterfaces",
     "new-version": "bash -c 'npx gulp --gulpfile=./scripts/version.js newVersion --options $0'"
@@ -71,8 +75,9 @@
   },
   "devDependencies": {
     "@compodoc/compodoc": "^1.1.11",
-    "@iqb/eslint-config": "^2.1.0",
+    "@iqb/eslint-config": "2.1.1",
     "@types/jest": "~27.4.1",
+    "axios": "^1.8.4",
     "dredd": "^14.0.0",
     "eslint-plugin-cypress": "~2.12.1",
     "eslint-plugin-html": "~6.2.0",

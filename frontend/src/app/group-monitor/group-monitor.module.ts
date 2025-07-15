@@ -21,6 +21,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { A11yModule } from '@angular/cdk/a11y';
+import { MatCardModule } from '@angular/material/card';
 import { SharedModule } from '../shared/shared.module';
 import { GroupMonitorRoutingModule } from './group-monitor-routing.module';
 import { GroupMonitorComponent } from './group-monitor.component';
@@ -31,12 +32,25 @@ import { TestSessionManager } from './test-session-manager/test-session-manager.
 import { GROUP_MONITOR_CONFIG } from './group-monitor.config';
 import { GroupMonitorConfig } from './group-monitor.interfaces';
 import { AddFilterDialogComponent } from './components/add-filter-dialog/add-filter-dialog.component';
+import { IsCodeClearPipe } from './test-session/is-code-clear.pipe';
+import { TimeLeftPipe } from './test-session/timeleft.pipe';
+import { PositionPipe } from './test-session/position.pipe';
+import { BookletStatesPipe } from './test-session/bookletstates.pipe';
+import { TestletvisiblePipe } from './test-session/testletvisible.pipe';
+import { TimeRestrictionDialogComponent } from './time-restriction-dialog/time-restriction-dialog.component';
 
 @NgModule({
   declarations: [
     GroupMonitorComponent,
     TestSessionComponent,
-    AddFilterDialogComponent
+    AddFilterDialogComponent,
+    TestSessionComponent,
+    IsCodeClearPipe,
+    TimeLeftPipe,
+    PositionPipe,
+    BookletStatesPipe,
+    TestletvisiblePipe,
+    TimeRestrictionDialogComponent
   ],
   imports: [
     CommonModule,
@@ -62,7 +76,9 @@ import { AddFilterDialogComponent } from './components/add-filter-dialog/add-fil
     MatSelectModule,
     MatFormFieldModule,
     MatAutocompleteModule,
-    A11yModule
+    A11yModule,
+    MatCardModule,
+    MatInputModule
   ],
   providers: [
     BackendService,

@@ -45,7 +45,7 @@ class WorkspaceDAO extends DAO {
         union
         select group_name as id, source, workspace_id, 'group' as type from logins group by group_name, source, workspace_id
       ) as globalIds
-      left join workspaces on workspace_id
+      left join workspaces on globalIds.workspace_id = workspaces.id
       ",
       [],
       true
@@ -105,7 +105,7 @@ class WorkspaceDAO extends DAO {
           $login->getName(),
           $login->getMode(),
           $this->workspaceId,
-          json_encode($login->getBooklets()),
+          json_encode($login->testNames()),
           $login->getGroupName(),
           $login->getGroupLabel(),
           json_encode($login->getCustomTexts()),
@@ -123,7 +123,7 @@ class WorkspaceDAO extends DAO {
 
     $this->_($sql, [], true);
 
-    $this->setSysCheckModeAccordingToTT($logins);
+    $this->updateValidUntilInPersonSession();
 
     return count($logins->asArray());
   }
@@ -610,7 +610,7 @@ class WorkspaceDAO extends DAO {
     );
   }
 
-  private function setSysCheckModeAccordingToTT(LoginArray $logins) {
+  private function setSysCheckModeAccordingToTT(LoginArray $logins): void {
     $enableSysCheckMode = SysCheckMode::TEST;
     /** @var Login $login */
     foreach ($logins as $login) {
@@ -635,6 +635,39 @@ class WorkspaceDAO extends DAO {
       ],
       true
     );
+  }
+
+  public function updateContentTypeBasedOnRemainingTesttakers(): void {
+    $allLogins = new LoginArray();
+    
+    // Get all remaining testtakers files in this workspace
+    $testtakersFiles = $this->_(
+      "select name from files where workspace_id = :ws_id and type = 'Testtakers' and is_valid = 1",
+      [':ws_id' => $this->workspaceId],
+      true
+    );
+    
+    if (!$testtakersFiles) {
+      $this->setSysCheckMode('mixed');
+      return;
+    }
+    
+    foreach ($testtakersFiles as $fileInfo) {
+      try {
+        $testtakersFile = new XMLFileTesttakers("$this->workspacePath/Testtakers/{$fileInfo['name']}");
+        if ($testtakersFile->isValid()) {
+          $fileLogins = $testtakersFile->getAllLogins();
+          foreach ($fileLogins as $login) {
+            $allLogins->add($login);
+          }
+        }
+      } catch (Exception $e) {
+        // Skip invalid files
+        continue;
+      }
+    }
+
+    $this->setSysCheckModeAccordingToTT($allLogins);
   }
 
   public function fetchDependenciesForFile(string $name): ?array {
@@ -709,5 +742,18 @@ class WorkspaceDAO extends DAO {
     }
 
     return $this->fetchFiles($sql, $replacements);
+  }
+
+  private function updateValidUntilInPersonSession() {
+    $this->_(
+      "
+      update person_sessions ps 
+      join login_sessions ls on ps.login_sessions_id = ls.id
+      join logins l on ls.name = l.name
+      set ps.valid_until = l.valid_to
+      ",
+      [],
+      true
+    );
   }
 }
